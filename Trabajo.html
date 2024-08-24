@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Figura de N Lados</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            text-align: center;
+            color: #e94e77;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        .controls {
+            text-align: center;
+        }
+        .control-group {
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .control-group label {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #e94e77;
+            font-size: 18px;
+        }
+        .control-group input[type="range"], .control-group input[type="number"] {
+            width: 80%;
+            margin: 10px;
+        }
+        .control-group input[type="range"] {
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 5px;
+            height: 10px;
+            cursor: pointer;
+        }
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: #e94e77;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .control-group button {
+            background-color: #e94e77;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .control-group button:hover {
+            background-color: #c43c60;
+        }
+        .info {
+            margin-top: 20px;
+            text-align: center;
+        }
+        canvas {
+            border: 2px solid #e94e77;
+            display: block;
+            margin: 20px auto;
+            background-color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Dibujador de Figuras Poligonales</h1>
+        <div class="controls">
+            <div class="control-group">
+                <label for="nLados">Número de Lados:</label>
+                <input type="number" id="nLados" min="3" value="5">
+                <input type="range" id="nLadosRange" min="3" max="12" value="5">
+            </div>
+            <div class="control-group">
+                <label for="radio">Radio:</label>
+                <input type="number" id="radio" value="100">
+                <input type="range" id="radioRange" min="10" max="300" value="100">
+            </div>
+            <div class="control-group">
+                <label for="escala">Escalar:</label>
+                <input type="number" id="escala" value="1" step="0.1">
+                <input type="range" id="escalaRange" min="0.1" max="3" step="0.1" value="1">
+            </div>
+            <div class="control-group">
+                <label for="rotar">Rotar (grados):</label>
+                <input type="number" id="rotar" value="0">
+                <input type="range" id="rotarRange" min="0" max="360" value="0">
+            </div>
+            <div class="control-group">
+                <label for="traslacionX">Traslación X:</label>
+                <input type="number" id="traslacionX" value="0">
+                <input type="range" id="traslacionXRange" min="-300" max="300" value="0">
+            </div>
+            <div class="control-group">
+                <label for="traslacionY">Traslación Y:</label>
+                <input type="number" id="traslacionY" value="0">
+                <input type="range" id="traslacionYRange" min="-300" max="300" value="0">
+            </div>
+            <button onclick="dibujarFigura()">Dibujar Figura</button>
+        </div>
+        <div class="info">
+            <p id="apotemaInfo">Apotema: -</p>
+        </div>
+        <canvas id="canvas" width="600" height="600"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let figura = [];
+        let figuraOriginal = [];
+
+        function calcularApotema(n, radio) {
+            if (n < 3 || radio <= 0) return 0;
+            return radio * Math.cos(Math.PI / n);
+        }
+
+        function actualizarApotema() {
+            const n = parseInt(document.getElementById('nLados').value);
+            const radio = parseFloat(document.getElementById('radio').value);
+            const apotema = calcularApotema(n, radio).toFixed(2);
+            document.getElementById('apotemaInfo').textContent = `Apotema: ${apotema}`;
+        }
+
+        function actualizarCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            figura.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+            ctx.closePath();
+            ctx.stroke();
+        }
+
+        function dibujarFigura() {
+            const n = parseInt(document.getElementById('nLados').value);
+            const radio = parseFloat(document.getElementById('radio').value);
+            if (n < 3) return alert('El número de lados debe ser al menos 3.');
+            const angulo = 2 * Math.PI / n;
+            figura = [];
+            for (let i = 0; i < n; i++) {
+                figura.push({
+                    x: canvas.width / 2 + radio * Math.cos(i * angulo - Math.PI / 2),
+                    y: canvas.height / 2 + radio * Math.sin(i * angulo - Math.PI / 2)
+                });
+            }
+            figuraOriginal = [...figura];
+            actualizarCanvas();
+            actualizarApotema();
+        }
+
+        function transformarFigura() {
+            const escala = parseFloat(document.getElementById('escala').value);
+            const grados = parseFloat(document.getElementById('rotar').value) * Math.PI / 180;
+            const tx = parseFloat(document.getElementById('traslacionX').value);
+            const ty = parseFloat(document.getElementById('traslacionY').value);
+
+            figura = figuraOriginal.map(p => {
+                // Escalar
+                let x = (p.x - canvas.width / 2) * escala + canvas.width / 2;
+                let y = (p.y - canvas.height / 2) * escala + canvas.height / 2;
+                // Rotar
+                let xRot = x - canvas.width / 2;
+                let yRot = y - canvas.height / 2;
+                x = xRot * Math.cos(grados) - yRot * Math.sin(grados) + canvas.width / 2;
+                y = xRot * Math.sin(grados) + yRot * Math.cos(grados) + canvas.height / 2;
+                // Trasladar
+                x += tx;
+                y += ty;
+                return { x, y };
+            });
+            actualizarCanvas();
+        }
+
+        function syncInputs() {
+            document.querySelectorAll('input[type="range"]').forEach(el => {
+                const relatedInput = document.getElementById(el.id.replace('Range', ''));
+                el.value = relatedInput.value;
+                el.addEventListener('input', () => {
+                    relatedInput.value = el.value;
+                    transformarFigura();
+                });
+            });
+        }
+
+        document.querySelectorAll('input[type="number"]').forEach(el => {
+            el.addEventListener('input', () => {
+                transformarFigura();
+                actualizarApotema();
+            });
+        });
+
+        syncInputs();
+    </script>
+</body>
+</html>
